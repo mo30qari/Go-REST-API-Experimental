@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/json"
+	_ "encoding/json"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
@@ -42,9 +42,13 @@ func getAllGames(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	result := db.Debug().Find(&game)
+	result, err := db.Model(&game).Where("id = ?", "1").Select("id, created_at, deleted_at").Rows()
 
-	json.NewEncoder(w).Encode(result)
+	for result.Next() {
+
+		result.Scan()
+
+	}
 
 }
 
