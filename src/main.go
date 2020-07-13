@@ -9,48 +9,72 @@ import (
 	"net/http"
 )
 
-type Game struct {
-	id uint
-	gorm.Model
-	Name  string
-	Genre []Genre
-}
-
 type Genre struct {
 	id    uint
 	Title string
+	gorm.Model
+}
+
+type Game struct {
+	id    uint
+	Name  string
+	Genre Genre `gorm:"foreignkey:id"`
+	gorm.Model
 }
 
 func main() {
+	db, _ := getDB()
+	db.DropTableIfExists(&Game{}, &Genre{})
+	db.CreateTable(&Game{}, Genre{})
+
+	genre := Genre{
+		Title: "Puzzle",
+	}
+
+	db.NewRecord(genre)
+	db.Create(&genre)
+
+	game := Game{
+		Name: "drop Puzzle",
+	}
+
+	db.NewRecord(game)
+	db.Create(&game)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/games", getAllGames)
+	//router.HandleFunc("/games", getAllGames)
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 
 }
 
-func getAllGames(w http.ResponseWriter, r *http.Request) {
-
-	db, err := getDB()
-
-	if err != nil {
-		panic(err.Error())
-	}
-
-	game := Game{}
-
-	w.Header().Set("Content-Type", "application/json")
-
-	result, err := db.Model(&game).Where("id = ?", "1").Select("id, created_at, deleted_at").Rows()
-
-	for result.Next() {
-
-		result.Scan()
-
-	}
-
-}
+//func getAllGames(w http.ResponseWriter, r *http.Request) {
+//
+//	db, err := getDB()
+//
+//	if err != nil {
+//		panic(err.Error())
+//	}
+//
+//	game := Game{}
+//
+//	result, err := db.Model(&game).Where("id = ?", "1").Select("id, created_at, deleted_at").Rows()
+//
+//	if err != nil{
+//		panic(err.Error())
+//	}
+//
+//	for result.Next() {
+//
+//		err = result.Scan(&id, &Name, &Genre{})
+//
+//		if err != nil{
+//			panic(err.Error())
+//		}
+//
+//	}
+//
+//}
 
 func getDB() (*gorm.DB, error) {
 
