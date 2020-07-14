@@ -1,52 +1,106 @@
 package main
 
 import (
-	_ "encoding/json"
+	"fmt"
+
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
-	"log"
-	"net/http"
 )
 
-type Genre struct {
-	id    uint
-	Title string
-	gorm.Model
-}
+const (
+	connStr = "root:@/dds_db?charset=utf8&parseTime=True&loc=Local"
+)
 
-type Game struct {
-	id    uint
-	Name  string
-	Genre Genre `gorm:"foreignkey:id"`
-	gorm.Model
-}
+type (
+	User struct {
+		gorm.Model
+		Name     string
+		Username string `gorm:"not null"`
+		Password string `gorm:"not null"`
+		Messages []Message
+	}
+
+	Message struct {
+		Body   string `gorm:"not null`
+		User   User
+		UserID uint
+		gorm.Model
+	}
+)
 
 func main() {
-	db, _ := getDB()
-	db.DropTableIfExists(&Game{}, &Genre{})
-	db.CreateTable(&Game{}, Genre{})
 
-	genre := Genre{
-		Title: "Puzzle",
+	db, err := gorm.Open("mysql", connStr)
+	db.DropTableIfExists(&Message{}, &User{})
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	defer db.Close()
+
+	db.AutoMigrate(&User{})
+	db.AutoMigrate(&Message{})
+
+	var user = &User{Name: "Peter Jones", Username: "pj@email.com", Password: "password"}
+
+	if err := db.Model(&User{}).Create(user).Error; err != nil {
+		fmt.Println(err.Error())
 	}
 
-	db.NewRecord(genre)
-	db.Create(&genre)
+	message := &Message{Body: "Hi"}
 
-	game := Game{
-		Name: "drop Puzzle",
-	}
-
-	db.NewRecord(game)
-	db.Create(&game)
-
-	router := mux.NewRouter()
-	//router.HandleFunc("/games", getAllGames)
-
-	log.Fatal(http.ListenAndServe(":8080", router))
-
+	db.Model(user).Find(user)
+	db.Model(user).Association("Messages").Append(message)
 }
+
+//import (
+//	_ "encoding/json"
+//	_ "github.com/go-sql-driver/mysql"
+//)
+
+//type Genre struct {
+//	Title string
+//	gorm.Model
+//}
+//
+//type Game struct {
+//	Name  string
+//	Genre Genre
+//	gorm.Model
+//}
+//
+//func main() {
+//	db, _ := getDB()
+//	db.DropTableIfExists(&Game{}, &Genre{})
+//
+//	db.AutoMigrate(&Game{})
+//	db.AutoMigrate(&Genre{})
+//
+//	game := &Game{
+//		Name: "Drop Puzzle",
+//	}
+//
+//	if err := db.Model(&Game{}).Create(game).Error; err != nil{
+//
+//		panic(err.Error())
+//
+//	}
+//
+//	genre := &Genre{
+//		Title: "Arcade",
+//	}
+//
+//	db.Model(&Game{}).Find(game)
+//	db.Model(game).Association("Genre").Append(genre)
+//
+//
+//
+//	router := mux.NewRouter()
+//	//router.HandleFunc("/games", getAllGames)
+//
+//	log.Fatal(http.ListenAndServe(":8080", router))
+//
+//}
 
 //func getAllGames(w http.ResponseWriter, r *http.Request) {
 //
@@ -76,8 +130,8 @@ func main() {
 //
 //}
 
-func getDB() (*gorm.DB, error) {
-
-	return gorm.Open("mysql", "root:@/dds_db?charset=utf8&parseTime=True&loc=Local")
-
-}
+//func getDB() (*gorm.DB, error) {
+//
+//	return gorm.Open("mysql", "root:@/dds_db?charset=utf8&parseTime=True&loc=Local")
+//
+//}
