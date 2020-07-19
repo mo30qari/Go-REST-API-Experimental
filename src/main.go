@@ -44,7 +44,7 @@ func main() {
 	var user = &User{Name: "Peter Jones", Username: "pj@email.com", Password: "password"}
 
 	if err := db.Model(&User{}).Create(user).Error; err != nil {
-		fmt.Println(err.Error())
+		panic(err.Error())
 	}
 
 	message := &Message{Body: "Hi"}
