@@ -14,7 +14,7 @@ type (
 		gorm.Model
 		Name    string
 		Genre   Genre
-		GenreID string
+		GenreID uint
 	}
 	
 	Genre struct {
@@ -40,10 +40,8 @@ func main() {
 		
 	}
 	
-	genre := &Genre{Title: "Arcade"}
-	
 	db.Model(game).Find(game)
-	db.Model(game).Association("Genre").Append(genre)
+	db.Model(game).Association("Genre").Append(&Genre{Title: "Shooter"})
 	
 	router := mux.NewRouter()
 	//router.HandleFunc("/games", getAllGames)
